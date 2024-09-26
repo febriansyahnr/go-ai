@@ -7,7 +7,9 @@ import (
 )
 
 type (
-	Config struct{}
+	Config struct {
+		Port int `mapstructure:"PORT"`
+	}
 	Secret struct {
 		ChatGPTToken string `mapstructure:"CHAT_GPT_TOKEN"`
 	}

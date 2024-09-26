@@ -3,6 +3,7 @@ module github.com/febriansyahnr/go-ai
 go 1.23.1
 
 require (
+	github.com/coder/websocket v1.8.12
 	github.com/sashabaranov/go-openai v1.30.3
 	github.com/spf13/viper v1.19.0
 )
