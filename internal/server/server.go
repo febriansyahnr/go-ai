@@ -6,15 +6,33 @@ import (
 	"time"
 
 	"github.com/febriansyahnr/go-ai/config"
+	"github.com/febriansyahnr/go-ai/internal/service"
 )
 
 type Server struct {
-	port int
+	port   int
+	config *config.Config
+	secret *config.Secret
+	AI     service.IAI
 }
 
-func New(conf *config.Config, secret *config.Secret) *http.Server {
+type ServerFunc func(*Server)
+
+func WithAI(ai service.IAI) ServerFunc {
+	return func(s *Server) {
+		s.AI = ai
+	}
+}
+
+func New(conf *config.Config, secret *config.Secret, confServices ...ServerFunc) *http.Server {
 	NewServer := &Server{
-		port: conf.Port,
+		port:   conf.Port,
+		config: conf,
+		secret: secret,
+	}
+
+	for _, fn := range confServices {
+		fn(NewServer)
 	}
 
 	// Declare Server config

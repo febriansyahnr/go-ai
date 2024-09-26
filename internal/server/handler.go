@@ -1,14 +1,13 @@
 package server
 
 import (
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/coder/websocket"
+	"github.com/sashabaranov/go-openai"
 )
 
 func (s *Server) websocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,37 +26,42 @@ func (s *Server) websocketHandler(w http.ResponseWriter, r *http.Request) {
 	// socketCtx := socket.CloseRead(ctx)
 	quit := false
 
+	messages := make([]openai.ChatCompletionMessage, 0)
+
+	if s.AI == nil {
+		socket.Close(websocket.StatusNormalClosure, "AI Service is nill")
+		return
+	}
+
 	for !quit {
 		select {
 		case <-ctx.Done():
 			slog.Info("context done")
 			return
 		default:
-			msgType, msg, err := socket.Read(ctx)
+			_, msg, err := socket.Read(ctx)
 			if err != nil {
 				slog.Error("error reading message", "error", err)
-				return
+				break
 			}
-			slog.Info("message received", "msgType", msgType, "msg", string(msg))
-			response := fmt.Sprintf("server timestamp: %d", time.Now().UnixNano())
-			err = socket.Write(ctx, websocket.MessageText, []byte(response))
-			if err != nil {
-				slog.Error("error writing message", "error", err)
-				return
-			}
+
 			strMsg := string(msg)
-			if strings.EqualFold(strMsg, "quit") {
+			if strings.EqualFold(strMsg, "quit()") {
 				quit = true
+				continue
+			}
+
+			response, err := s.AI.SendMessage(ctx, strMsg, &messages)
+			if err != nil {
+				slog.Error("error sending message", "error", err)
+				break
+			}
+
+			if err := socket.Write(ctx, websocket.MessageText, []byte(response)); err != nil {
+				slog.Error("error writing message", "error", err)
+				break
 			}
 		}
 	}
-
-	// for {
-	// 	payload := fmt.Sprintf("server timestamp: %d", time.Now().UnixNano())
-	// 	err := socket.Write(socketCtx, websocket.MessageText, []byte(payload))
-	// 	if err != nil {
-	// 		break
-	// 	}
-	// 	time.Sleep(time.Second * 2)
-	// }
+	socket.Close(websocket.StatusNormalClosure, "")
 }

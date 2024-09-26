@@ -1,2 +1,2 @@
 run:
-	@go run cmd/console/main.go
+	@go run cmd/api/main.go

@@ -6,6 +6,8 @@ import (
 
 	"github.com/febriansyahnr/go-ai/config"
 	"github.com/febriansyahnr/go-ai/internal/server"
+	"github.com/febriansyahnr/go-ai/internal/service/ai"
+	"github.com/sashabaranov/go-openai"
 )
 
 func main() {
@@ -15,7 +17,11 @@ func main() {
 		return
 	}
 
-	srv := server.New(conf, secret)
+	chatGptAI := openai.NewClient(secret.ChatGPTToken)
+
+	aiService := ai.New(conf, secret, chatGptAI)
+
+	srv := server.New(conf, secret, server.WithAI(aiService))
 	err = srv.ListenAndServe()
 	if err != nil {
 		panic(fmt.Sprintf("cannot start server: %s", err))
