@@ -2,24 +2,31 @@ package disbursement
 
 import "github.com/sashabaranov/go-openai"
 
-const CreateSingleDisbursement string = "CREATE_SINGLE_DISBURSEMENT"
+const (
+	CreateTopupVA            string = "CREATE_TOPUP_VA"
+	CreateSingleDisbursement string = "CREATE_SINGLE_DISBURSEMENT"
+)
 
-func GetToolDefinition(fn string) openai.Tool {
-	return openai.Tool{
+var tools = map[string]openai.Tool{
+	CreateTopupVA: {
 		Type: "function",
 		Function: &openai.FunctionDefinition{
-			Name:        "get_current_weather",
-			Description: "Get the current weather in a given location",
+			Name:        CreateTopupVA,
+			Description: "create virtual account for topup",
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"location": map[string]string{
+					"amount": map[string]string{
 						"type":        "string",
-						"description": "The city and state, e.g. San Francisco, CA",
+						"description": "topup amount",
 					},
 				},
-				"required": []string{"location"},
+				"required": []string{"amount"},
 			},
 		},
-	}
+	},
+}
+
+func GetToolDefinition(fn string) openai.Tool {
+	return tools[fn]
 }
