@@ -8,7 +8,8 @@ import (
 
 type (
 	Config struct {
-		Port int `mapstructure:"PORT"`
+		Port     int      `mapstructure:"PORT"`
+		BePortal BEPortal `mapstructure:"BE_PORTAL"`
 	}
 	Secret struct {
 		ChatGPTToken string `mapstructure:"CHAT_GPT_TOKEN"`

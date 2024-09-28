@@ -12,6 +12,10 @@ import (
 
 func (s *Server) websocketHandler(w http.ResponseWriter, r *http.Request) {
 	socket, err := websocket.Accept(w, r, nil)
+	tokenBearer := r.Header.Get("Authorization")
+	if tokenBearer != "" {
+		slog.Info("Auth", slog.String("token", tokenBearer))
+	}
 
 	if err != nil {
 		log.Printf("could not open websocket: %v", err)
@@ -27,6 +31,10 @@ func (s *Server) websocketHandler(w http.ResponseWriter, r *http.Request) {
 	quit := false
 
 	messages := make([]openai.ChatCompletionMessage, 0)
+	messages = append(messages, openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleSystem,
+		Content: "You are a helpful assistant.",
+	})
 
 	if s.AI == nil {
 		socket.Close(websocket.StatusNormalClosure, "AI Service is nill")
@@ -41,8 +49,8 @@ func (s *Server) websocketHandler(w http.ResponseWriter, r *http.Request) {
 		default:
 			_, msg, err := socket.Read(ctx)
 			if err != nil {
-				slog.Error("error reading message", "error", err)
-				break
+				socket.Close(websocket.StatusNormalClosure, "error reading message")
+				return
 			}
 
 			strMsg := string(msg)

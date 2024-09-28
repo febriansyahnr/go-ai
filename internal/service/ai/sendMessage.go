@@ -18,25 +18,7 @@ func (ai *AI) SendMessage(ctx context.Context, msg string, messages *[]openai.Ch
 		openai.ChatCompletionRequest{
 			Model:    openai.GPT4o,
 			Messages: *messages,
-			Tools: []openai.Tool{
-				{
-					Type: "function",
-					Function: &openai.FunctionDefinition{
-						Name:        "get_current_weather",
-						Description: "Get the current weather in a given location",
-						Parameters: map[string]any{
-							"type": "object",
-							"properties": map[string]any{
-								"location": map[string]string{
-									"type":        "string",
-									"description": "The city and state, e.g. San Francisco, CA",
-								},
-							},
-							"required": []string{"location"},
-						},
-					},
-				},
-			},
+			Tools:    []openai.Tool{},
 		},
 	)
 	if err != nil {
@@ -44,8 +26,9 @@ func (ai *AI) SendMessage(ctx context.Context, msg string, messages *[]openai.Ch
 	}
 	content := resp.Choices[0].Message.Content
 	if len(resp.Choices[0].Message.ToolCalls) > 0 {
+		content = "call tool(s): "
 		for _, tool := range resp.Choices[0].Message.ToolCalls {
-			fmt.Printf("%#v\n", tool)
+			content += fmt.Sprintf("%s ", tool.Function.Name)
 		}
 	}
 	*messages = append(*messages, openai.ChatCompletionMessage{
